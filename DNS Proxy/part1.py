@@ -14,8 +14,7 @@ def server():
             if query:
                 print('query:', query)
                 print('query address:', address)
-
-                # send data to Google's DNS server
+                
                 print('\nforwarding query to Google DNS server...')
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_forward:
                     s_forward.sendto(query, DNS_SERVER_ADDRESS)

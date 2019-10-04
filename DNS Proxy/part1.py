@@ -23,8 +23,10 @@ def server():
                     if response:
                         print('response:', response)
                         print('response address:', response_address)
-                        print(response.decode(encoding="utf-8", errors='ignore'))
-                break
+
+                        s_forward.sendto(response, CLIENT_ADDRESS)
+                        print('response send back to client:', s_receive.recv(4096))
+                        break
 
 
 if __name__ == '__main__':

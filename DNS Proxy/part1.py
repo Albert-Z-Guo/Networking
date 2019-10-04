@@ -1,5 +1,4 @@
 import socket
-import sys
 
 
 # IPv4 addresses with privileged port
@@ -8,23 +7,23 @@ CLIENT_ADDRESS = ('127.0.0.1', 53)
 
 
 def server():
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind(CLIENT_ADDRESS)
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
+        s_receive.bind(CLIENT_ADDRESS)
         while True:
-            query, address = s.recvfrom(4096)
+            query, address = s_receive.recvfrom(4096)
             if query:
                 print('query:', query)
                 print('query address:', address)
 
                 # send data to Google's DNS server
-                print('\nforwarding query to Google...')
+                print('\nforwarding query to Google DNS server...')
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_forward:
                     s_forward.sendto(query, DNS_SERVER_ADDRESS)
-                    response, DNS_address = s_forward.recvfrom(4096)
+                    response, response_address = s_forward.recvfrom(4096)
                     if response:
                         print('response:', response)
-                        print('response address:', DNS_address)
-                        # print(response.decode("utf-8"))
+                        print('response address:', response_address)
+                        print(response.decode(encoding="utf-8", errors='ignore'))
                 break
 
 

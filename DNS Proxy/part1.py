@@ -6,7 +6,7 @@ DNS_SERVER_ADDRESS = ('8.8.8.8', 53) # Google public DNS servers
 CLIENT_ADDRESS = ('127.0.0.1', 53)
 
 
-def server():
+def dns_proxy():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
         s_receive.bind(CLIENT_ADDRESS)
         while True: # keep listening
@@ -31,4 +31,4 @@ def server():
 
 
 if __name__ == '__main__':
-    server()
+    dns_proxy()

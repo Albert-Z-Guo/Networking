@@ -9,7 +9,7 @@ CLIENT_ADDRESS = ('127.0.0.1', 53)
 def dns_proxy():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
         s_receive.bind(CLIENT_ADDRESS)
-        while True: # keep listening
+        while True: # keep receiving
             query, address = s_receive.recvfrom(4096)
             if query:
                 print('query:', query)
@@ -17,8 +17,8 @@ def dns_proxy():
                 print('\nforwarding query to Google DNS server...')
 
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_forward:
-                    while True: # keep sending queries until receiving a response
-                        s_forward.sendto(query, DNS_SERVER_ADDRESS)
+                    s_forward.sendto(query, DNS_SERVER_ADDRESS)
+                    while True: # keep receiving
                         response, response_address = s_forward.recvfrom(4096)
                         if response:
                             print('response:', response)

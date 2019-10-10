@@ -17,6 +17,7 @@ def server():
                     sock1.sendto(data,DNS_server)
                     res, server = sock1.recvfrom(4096)
                     sock.sendto(res,address)
+                    sock1.close()
               
 server()
 

@@ -16,9 +16,9 @@ def dns_proxy_over_http():
                 print('query address:   ', address)
 
                 message = DNSRecord.parse(query)
-                question =  message.questions[0]
-                query_type =  message.questions[0].qtype
-                query_class =  message.questions[0].qclass
+                question = message.questions[0]
+                query_type = message.questions[0].qtype
+                query_class = message.questions[0].qclass
                 query_header = message.header
 
                 # print('message:', message)
@@ -43,7 +43,7 @@ def dns_proxy_over_http():
                 query_type = google_dns_response['Question'][0]['type'] # type 1 means type A
                 name = google_dns_response['Answer'][0]['name']
                 TTL = google_dns_response['Answer'][0]['TTL']
-                data =  google_dns_response['Answer'][0]['data']
+                data = google_dns_response['Answer'][0]['data']
 
                 query_header.set_qr(1) # set QR = 1 for response
                 query_header.set_tc(TC)
@@ -65,10 +65,7 @@ def dns_proxy_over_http():
                 # print('AD:', query_header.ad)
                 # print('CD:', query_header.cd)
 
-                response = DNSRecord(query_header,
-                          q=question,
-                          a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data))
-                )
+                response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data)))
 
                 # print(response)
                 s_receive.sendto(response.pack(), CLIENT_ADDRESS)

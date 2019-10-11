@@ -12,9 +12,6 @@ def dns_proxy_over_http():
         while True: # keep listening
             query, address = s_receive.recvfrom(4096)
             if query:
-                print('query:           ', query)
-                print('query address:   ', address)
-
                 # parse query
                 message = DNSRecord.parse(query)
                 question = message.questions[0]
@@ -56,6 +53,7 @@ def dns_proxy_over_http():
                 query_header.set_ra(RA)
                 query_header.set_ad(AD)
                 query_header.set_cd(CD)
+                response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data)))
 
                 # print('RA:', RA)
                 # print('type:', query_type)
@@ -69,10 +67,8 @@ def dns_proxy_over_http():
                 # print('RA:', query_header.ra)
                 # print('AD:', query_header.ad)
                 # print('CD:', query_header.cd)
-
-                response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data)))
-
                 # print(response)
+
                 # send the response back to client
                 s_receive.sendto(response.pack(), CLIENT_ADDRESS)
                 print('response sent back to client:', s_receive.recv(4096))

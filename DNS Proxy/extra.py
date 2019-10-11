@@ -8,7 +8,7 @@ from dnslib import *
 # IPv4 addresses with privileged port
 CLIENT_ADDRESS = ('127.0.0.1', 53)
 
-def dns_proxy_over_http():
+def dns_proxy_over_http_timing_test():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
         s_receive.bind(CLIENT_ADDRESS)
         while True: # keep listening
@@ -55,4 +55,4 @@ def dns_proxy_over_http():
             break
 
 if __name__ == '__main__':
-    dns_proxy_over_http()
+    dns_proxy_over_http_timing_test()

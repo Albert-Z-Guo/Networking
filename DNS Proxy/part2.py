@@ -15,6 +15,7 @@ def dns_proxy_over_http():
                 print('query:           ', query)
                 print('query address:   ', address)
 
+                # parse query
                 message = DNSRecord.parse(query)
                 question = message.questions[0]
                 query_type = message.questions[0].qtype
@@ -32,9 +33,12 @@ def dns_proxy_over_http():
                 # print('CD:', query_header.cd)
 
                 # https://developers.google.com/speed/public-dns/docs/doh/json
+                # send query to Google DNS server
                 parameters = {'name': str(question.qname), 'type': query_type}
                 google_dns_response = requests.get('https://dns.google/resolve', params=parameters).json()
                 print(google_dns_response)
+
+                # parse response from Google DNS server
                 TC = google_dns_response['TC']
                 RD = google_dns_response['RD']
                 RA = google_dns_response['RA']
@@ -45,6 +49,7 @@ def dns_proxy_over_http():
                 TTL = google_dns_response['Answer'][0]['TTL']
                 data = google_dns_response['Answer'][0]['data']
 
+                # construct response
                 query_header.set_qr(1) # set QR = 1 for response
                 query_header.set_tc(TC)
                 query_header.set_rd(RD)
@@ -68,8 +73,9 @@ def dns_proxy_over_http():
                 response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data)))
 
                 # print(response)
+                # send the response back to client
                 s_receive.sendto(response.pack(), CLIENT_ADDRESS)
-                print('response send back to client:', s_receive.recv(4096))
+                print('response sent back to client:', s_receive.recv(4096))
                 break
 
                 # example response from part2.py

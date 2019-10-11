@@ -1,28 +1,10 @@
-import struct
-
 import socket
 import requests
 
+from dnslib import *
+
 # IPv4 addresses with privileged port
-DNS_SERVER_ADDRESS = ('8.8.8.8', 53) # Google public DNS servers
 CLIENT_ADDRESS = ('127.0.0.1', 53)
-
-
-def parse_udp(packet):
-    header = packet[0:8]
-    data = packet[8:]
-    (source_port, dest_port, data_length, checksum) = struct.unpack("!HHHH", header)
-    return source_port, dest_port, data_length, checksum, data
-
-def extract_string(bytes):
-    message = []
-    for i in bytes:
-        if i >= 3:
-            if i < 10:
-                message.append('.')
-            else:
-                message.append(chr(i))
-    return ''.join(message[1:])
 
 def dns_proxy_over_http():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
@@ -33,21 +15,70 @@ def dns_proxy_over_http():
                 print('query:           ', query)
                 print('query address:   ', address)
 
-                source_port, dest_port, data_length, checksum, data = parse_udp(query)
-                print('source port:     ', source_port)
-                print('destination port:', dest_port)
-                print('data length:     ', data_length)
-                print('checksum:        ', checksum)
+                message = DNSRecord.parse(query)
+                question =  message.questions[0]
+                query_type =  message.questions[0].qtype
+                query_class =  message.questions[0].qclass
+                query_header = message.header
 
-                print('data:            ', data)
-                print('data decoded:    ', extract_string(data))
+                # print('message:', message)
+                # print('question:', message.questions)
+                # print('QR:', query_header.qr)
+                # print('AA:', query_header.aa)
+                # print('TC:', query_header.tc)
+                # print('RD:', query_header.rd)
+                # print('RA:', query_header.ra)
+                # print('AD:', query_header.ad)
+                # print('CD:', query_header.cd)
 
-                parameters = {'name': extract_string(data)}
-                response = requests.get('https://dns.google/resolve', params=parameters)
-                print(response.json())
+                # https://developers.google.com/speed/public-dns/docs/doh/json
+                parameters = {'name': str(question.qname), 'type': query_type}
+                google_dns_response = requests.get('https://dns.google/resolve', params=parameters).json()
+                print(google_dns_response)
+                TC = google_dns_response['TC']
+                RD = google_dns_response['RD']
+                RA = google_dns_response['RA']
+                AD = google_dns_response['AD']
+                CD = google_dns_response['CD']
+                query_type = google_dns_response['Question'][0]['type'] # type 1 means type A
+                name = google_dns_response['Answer'][0]['name']
+                TTL = google_dns_response['Answer'][0]['TTL']
+                data =  google_dns_response['Answer'][0]['data']
 
+                query_header.set_qr(1) # set QR = 1 for response
+                query_header.set_tc(TC)
+                query_header.set_rd(RD)
+                query_header.set_ra(RA)
+                query_header.set_ad(AD)
+                query_header.set_cd(CD)
+
+                # print('RA:', RA)
+                # print('type:', query_type)
+                # print('name:', name)
+                # print('TTL:', TTL)
+                # print('data:', data)
+                # print('QR:', query_header.qr)
+                # print('AA:', query_header.aa)
+                # print('TC:', query_header.tc)
+                # print('RD:', query_header.rd)
+                # print('RA:', query_header.ra)
+                # print('AD:', query_header.ad)
+                # print('CD:', query_header.cd)
+
+                response = DNSRecord(query_header,
+                          q=question,
+                          a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data))
+                )
+
+                # print(response)
+                s_receive.sendto(response.pack(), CLIENT_ADDRESS)
+                print('response send back to client:', s_receive.recv(4096))
                 break
 
+                # example response from part2.py
+                # b'\xa5V\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x9b\x00\x04\xac\xd9\x05\x0e'
+                # example response from part1.py
+                # b'\xd4!\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\xbc\x00\x04\xac\xd9\x05\x0e'
 
 if __name__ == '__main__':
     dns_proxy_over_http()

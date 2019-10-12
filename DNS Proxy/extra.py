@@ -46,7 +46,10 @@ def dns_proxy_over_http_timing_test():
                     query_header.set_ra(RA)
                     query_header.set_ad(AD)
                     query_header.set_cd(CD)
-                    response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=A(data)))
+                    rdata = A(data)
+                    if query_type == 5:
+                        rdata = CNAME(data)
+                    response = DNSRecord(query_header, q=question, a=RR(rname=name, rtype=query_type, rclass=query_class, ttl=TTL, rdata=rdata))
 
                     # send the response back to client
                     s_receive.sendto(response.pack(), CLIENT_ADDRESS)

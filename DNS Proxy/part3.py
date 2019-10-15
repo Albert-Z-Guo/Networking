@@ -6,8 +6,8 @@ from dnslib import *
 from part2 import construct_response_message
 
 
-# IPv4 addresses with privileged port
-CLIENT_ADDRESS = ('127.0.0.1', 53)
+CLIENT_ADDRESS = ('127.0.0.1', 53) # IPv4 addresses with privileged port
+NUMBER_OF_TESTS = 5
 
 def dns_proxy_over_http_timing_test():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s_receive:
@@ -18,7 +18,7 @@ def dns_proxy_over_http_timing_test():
             if query:
                 record = open('time.txt', 'w')
                 record.write('Note that the module for constructing the DNS response message in part2.py is reused. \nThe time elapse starts when the proxy received the packet from client and ends when the proxy responded to client.\nTesting:\n')
-                for i in range(5):
+                for i in range(NUMBER_OF_TESTS):
                     start_time = time.time()
                     response = construct_response_message(query, session=session)
                     s_receive.sendto(response, address)

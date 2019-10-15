@@ -35,7 +35,7 @@ def construct_response_message(query_message, session=None):
         response = session.get('https://dns.google/resolve', params=parameters).json()
     else:
         response = requests.get('https://dns.google/resolve', params=parameters).json()
-    print(response)
+    # print(response)
 
     # construct DNS response message
     query_header.set_qr(1) # set QR = 1 for response
@@ -78,7 +78,6 @@ def dns_proxy_over_http():
                 # send the response back to client
                 response = construct_response_message(query)
                 socket_client.sendto(response, address)
-                print('response sent back to client:', response)
 
                 # example response from part1.py
                 # b'\xd3\x0b\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\xe3\x00\x04\xd8:\xc0\xee'

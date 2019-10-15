@@ -16,11 +16,16 @@ def dns_proxy_over_http_timing_test():
             query, address = s_receive.recvfrom(4096)
             session = requests.Session()
             if query:
-                for i in range(10):
+                record = open('time.txt', 'w')
+                record.write('Note that the module for constructing the DNS response message in part2.py is reused. \nThe time elapse starts when the proxy received the packet from client and ends when the proxy responded to client.\nTesting:\n')
+                for i in range(5):
                     start_time = time.time()
                     response = construct_response_message(query, session=session)
                     s_receive.sendto(response, address)
-                    print('DoH responded in {:.2f}s'.format(time.time() - start_time))
+                    time_elapsed = time.time() - start_time
+                    record.write('DoH responded in {:.2f}s\n'.format(time_elapsed))
+                    print('DoH responded in {:.2f}s'.format(time_elapsed))
+                break
 
 
 if __name__ == '__main__':

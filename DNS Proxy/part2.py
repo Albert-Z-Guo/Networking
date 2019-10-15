@@ -50,9 +50,17 @@ def construct_response_message(query_message, session=None):
     # in case of multiple questions and answers
     for question in response['Question']:
         message_response.add_question(DNSQuestion(qname=question['name'], qtype=question['type']))
-    for answer in response['Answer']:
-        rdata = CNAME(answer['data']) if answer['type'] == 5 else A(answer['data']) # type = 1 means type A; type = 5 means type CNAME
-        message_response.add_answer(RR(rname=answer['name'], rtype=answer['type'], rclass=query_class, ttl=answer['TTL'], rdata=rdata))
+
+    # note that only type A and type CNAME are tested
+    if 'Answer' in response.keys():
+        for answer in response['Answer']: # type A
+            rdata = CNAME(answer['data']) if answer['type'] == 5 else A(answer['data']) # type = 1 means type A; type = 5 means type CNAME
+            message_response.add_answer(RR(rname=answer['name'], rtype=answer['type'], rclass=query_class, ttl=answer['TTL'], rdata=rdata))
+    # in case of authoritative answer
+    # e.g. nslookup -type=CNAME www.google.com 127.0.0.1
+    if 'Authority' in response.keys():
+        for authority in response['Authority']:
+            message_response.add_auth(RR(rname=authority['name'], rtype=5, ttl=authority['TTL'], rdata=CNAME(authority['data'].split()[0])))
 
     # print('response:')
     # print('name:', message_response.a.rname)
@@ -66,6 +74,7 @@ def construct_response_message(query_message, session=None):
     # print('RA:', query_header.ra) # Recursion Available
     # print('AD:', query_header.ad) # Authentic Data
     # print('CD:', query_header.cd) # Checking Disabled
+    # print('message_response:', message_response)
 
     return message_response.pack()
 

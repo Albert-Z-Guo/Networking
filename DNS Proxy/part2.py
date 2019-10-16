@@ -56,11 +56,13 @@ def construct_response_message(query_message, session=None):
         for answer in response['Answer']: # type A
             rdata = CNAME(answer['data']) if answer['type'] == 5 else A(answer['data']) # type = 1 means type A; type = 5 means type CNAME
             message_response.add_answer(RR(rname=answer['name'], rtype=answer['type'], rclass=query_class, ttl=answer['TTL'], rdata=rdata))
-    # in case of authoritative answer
-    # e.g. nslookup -type=CNAME www.google.com 127.0.0.1
+    # in case of authoritative answer in type SOA
+    # e.g. nslookup -type=CNAME google.com 127.0.0.1
     if 'Authority' in response.keys():
         for authority in response['Authority']:
-            message_response.add_auth(RR(rname=authority['name'], rtype=5, ttl=authority['TTL'], rdata=CNAME(authority['data'].split()[0])))
+            data = authority['data'].split()
+            times = [int(i) for i in data[2:]]
+            message_response.add_auth(RR(rname=authority['name'], rtype=authority['type'], ttl=authority['TTL'], rdata=SOA(data[0], data[1], times)))
 
     # print('response:')
     # print('name:', message_response.a.rname)
@@ -87,12 +89,6 @@ def dns_proxy_over_http():
                 # send the response back to client
                 response = construct_response_message(query)
                 socket_client.sendto(response, address)
-
-                # example response from part1.py
-                # b'\xd3\x0b\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\xe3\x00\x04\xd8:\xc0\xee'
-
-                # example response from part2.py
-                # b'\x8f\xc5\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x01 \x00\x04\xd8:\xc0\xee'
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 import socket
 
 import requests
-from dnslib import *
+from dnslib import * # https://github.com/paulc/dnslib/blob/master/dnslib/dns.py
 
 
 # IPv4 addresses with privileged port

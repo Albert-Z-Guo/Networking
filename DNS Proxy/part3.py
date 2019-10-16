@@ -17,7 +17,7 @@ def dns_proxy_over_http_timing_test():
             session = requests.Session()
             if query:
                 record = open('time.txt', 'w')
-                record.write('Note that the module for constructing the DNS response message in part2.py is reused. \nThe time elapse starts when the proxy received the packet from client and ends when the proxy responded to client.\nTesting:\n')
+                record.write('Note that the module for constructing the DNS response message in part2.py is reused. \nThe time elapse starts when the proxy received the packet from client and ends when the proxy responded to client.\n\nTesting:\n')
                 for i in range(NUMBER_OF_TESTS):
                     start_time = time.time()
                     response = construct_response_message(query, session=session)

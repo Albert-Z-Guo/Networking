@@ -11,5 +11,4 @@ Part 3: <br />
 Optimizing Part 2 by setting up only one session on the first time making a request, and keeping the same session alive for the rest of the requests. A `time.txt` file is generated to measure the response times.
 
 ### Team Members:
-- Manshan Lin (MLW3472) [@linmanshan](https://github.com/linmanshan)
 - Zunran Guo (ZGU682) [@Albert-Z-Guo](https://github.com/Albert-Z-Guo)

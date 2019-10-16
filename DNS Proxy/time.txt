@@ -1,8 +1,9 @@
 Note that the module for constructing the DNS response message in part2.py is reused. 
 The time elapse starts when the proxy received the packet from client and ends when the proxy responded to client.
+
 Testing:
-DoH responded in 0.07s
-DoH responded in 0.02s
-DoH responded in 0.02s
-DoH responded in 0.02s
+DoH responded in 0.30s
 DoH responded in 0.03s
+DoH responded in 0.03s
+DoH responded in 0.02s
+DoH responded in 0.02s

@@ -31,10 +31,14 @@ def construct_response_message(query_message, session=None):
     # https://developers.google.com/speed/public-dns/docs/doh/json
     # send query to Google DNS server
     parameters = {'name': str(question), 'type': query_type}
-    if session:
-        response = session.get('https://dns.google/resolve', params=parameters).json()
+    response = session.get('https://dns.google/resolve', params=parameters) if session else requests.get('https://dns.google/resolve', params=parameters)
+
+    # check request response
+    if response.status_code != 200:
+        print('Connection failed. Exit program.')
+        exit()
     else:
-        response = requests.get('https://dns.google/resolve', params=parameters).json()
+        response = response.json()
     # print(response)
 
     # construct DNS response message

@@ -1,4 +1,4 @@
-# Networking
+# DNS Proxy
 
 ## Project Description
 Part 1: <br />

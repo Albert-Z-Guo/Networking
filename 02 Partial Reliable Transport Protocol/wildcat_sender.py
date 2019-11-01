@@ -1,5 +1,6 @@
 import time
 import queue
+import collections 
 
 import common
 import threading
@@ -18,6 +19,8 @@ class wildcat_sender(threading.Thread):
         self.next_packet_seq_num = 1
         self.base = 1
         self.start_time = time.time()
+        self.packet_times = {}
+        self.acks = set()
 
     def new_packet(self, packet_byte_array):
         packet_seq_num = self.packet_seq_num.to_bytes(2, byteorder='big')
@@ -26,38 +29,35 @@ class wildcat_sender(threading.Thread):
         checksum = sum(packet_byte_array).to_bytes(2, byteorder='big')
         packet_byte_array += checksum # append checksum
         self.buffer.append(packet_byte_array)
-        print('storing packet:', int.from_bytes(packet_byte_array[:2], byteorder='big'))
         self.packet_seq_num += 1
 
     def check_time(self):
-        # if timeout
-        if time.time() - self.start_time > 0.5:
-            print('current time diff:', time.time() - self.start_time)
-            print('timed out')
-            self.start_time = time.time() # start timer
-            # resend all data in window
-            for i in range(self.base, self.next_packet_seq_num, 1):
-                print('resending packet:', int.from_bytes(self.buffer[i-1][:2], byteorder='big'), self.buffer[i-1])
-                self.my_tunnel.magic_send(bytearray(self.buffer[i-1]))
+        for packet_num in range(self.base, self.base+self.window_size):
+            if packet_num in self.packet_times and time.time() - self.packet_times[packet_num] > 0.5: # if timeout
+                print('timed out:', time.time() - self.packet_times[packet_num])
+                self.my_tunnel.magic_send(bytearray(self.buffer[packet_num-1])) # resend packet
+                self.packet_times[packet_num] = time.time() # start timer
+                print('resending packet:', int.from_bytes(self.buffer[packet_num-1][:2], byteorder='big'))
 
     def receive(self, packet_byte_array):
-        ack_seq_num = packet_byte_array[:2]
-        ack_payload = packet_byte_array[2:-2]
-        checksum = packet_byte_array[-2:]
+        ack_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big') 
+        checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
 
         # if ack is not corrupted
-        if sum(packet_byte_array[:-2]).to_bytes(2, byteorder='big') == checksum:
-            self.base = int.from_bytes(ack_seq_num, byteorder='big') + 1
-            print('base now            :', self.base)
-            if self.base == self.next_packet_seq_num:
-                pass # stop timer
-            else:
-                self.start_time = time.time() # start timer
+        if sum(packet_byte_array[:-2]) == checksum:
+            if self.base <= ack_seq_num < self.base + self.window_size: # if packet is in the window
+                self.acks.add(ack_seq_num) # mark packet as received
+                self.packet_times[ack_seq_num] = time.time() # update time
+                if ack_seq_num == self.base:
+                    self.base += 1
+                    # move base forward to the unacknowledged packet with the smallest sequence number
+                    while (self.base in self.acks):
+                        self.base += 1
+                        print('base now:', self.base)
         # if ack is corrupted
         else:
-            print('checksum:', int.from_bytes(checksum, byteorder='big'))
-            print('data sum:', sum(packet_byte_array[:-2]))
             print('ack corrupted')
+            self.my_tunnel.magic_send(bytearray(self.buffer[self.base-1])) # resend base packet
 
     def run(self):
         while not self.die:
@@ -67,10 +67,8 @@ class wildcat_sender(threading.Thread):
                 if self.next_packet_seq_num < self.base + self.window_size:    
                     print('sending packet...\tbase:', self.base, '\tnext_packet_seq_num:', self.next_packet_seq_num)
                     data = self.buffer[self.next_packet_seq_num-1]
-                    # print('sent:', int.from_bytes(data[:2], byteorder='big'), data[2:-2])
                     self.my_tunnel.magic_send(bytearray(data))
-                    if self.base == self.next_packet_seq_num:
-                        self.start_time = time.time() # start timer
+                    self.packet_times[self.next_packet_seq_num] = time.time() # time individual packet
                     self.next_packet_seq_num += 1
 
             self.check_time()

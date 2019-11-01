@@ -1,9 +1,7 @@
-# Networking
+# Selective Repeat and Go-Back-N Protocols
 
 ## Project Description
-This project implements a partial reliable transfer protocol with a sender and a receiver, both running on top of UDP. 
-
-This protocol has two parameters: a maximum allowed loss rate a ∈ [0, 100] and a window size w. Assume both sender and receiver have the same window size w and at any given moment, except for the very beginning, the receiver should receive at least (100 - a) percent of the packets from the sender. The emulated UDP connection is expected to drop and corrupt packets randomly.
+This project implements Selective Repeat Protocol and Go-Back-N protocol. The emulated UDP connection is expected to drop and corrupt packets randomly.
 
 ### Message format
 The sender will be called by user to send arbitrary payloads. Each payload will form a MSG packet and managed by the sender for delivery.
@@ -19,7 +17,7 @@ The payload of each ACK packet should be a bit map of the current receiver windo
 ### How to run
 #### To start the sender: <br/>
 ```python
-python3 start_sender.py `IP` `PORT` `ALLOWED_LOSS` `WINDOW_SIZE` `LOSS_RATE` `CORRUPT_RATE`
+python3 start_sender.py IP PORT ALLOWED_LOSS WINDOW_SIZE LOSS_RATE CORRUPT_RATE
 ```
 
 Parameters: <br/>
@@ -32,7 +30,7 @@ Parameters: <br/>
 
 #### To start the receiver: <br/>
 ```python
-python3 start_receiver.py `PORT` `ALLOWED_LOSS` `WINDOW_SIZE` `LOSS_RATE` `CORRUPT_RATE`
+python3 start_receiver.py PORT ALLOWED_LOSS WINDOW_SIZE LOSS_RATE CORRUPT_RATE
 ```
 
 Parameters: <br/>

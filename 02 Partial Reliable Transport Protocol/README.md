@@ -6,11 +6,11 @@ This project implements Selective Repeat Protocol and Go-Back-N protocol. The em
 ### Message format
 The sender will be called by user to send arbitrary payloads. Each payload will form a MSG packet and managed by the sender for delivery.
  - The first two bytes of each MSG packet should be the sequence number that identifies the packet.
- - The last two bytes of each MSG packet should be the checksum that makes sure the packet is not corrupted. The type of checksum is not specified and is up to your implementation.
+ - The last two bytes of each MSG packet should be the checksum that makes sure the packet is not corrupted.
 
 The receiver will acknowledge the successful delivery of packets by sending ACK packets. 
  - The first two bytes of each ACK packet should be the starting position of current receiver window. 
- - The last two bytes of each ACK packet should be the checksum that makes sure the packet is not corrupted. If a packet is corrupted, your receiver should drop that packet. 
+ - The last two bytes of each ACK packet should be the checksum that makes sure the packet is not corrupted. If a packet is corrupted, the receiver should drop that packet. 
 
 The payload of each ACK packet should be a bit map of the current receiver window status, with `1` denoting successful deliveries and `0` otherwise. From the ACK packet, the sender should be able to perceive the receiver's window status, and slide the window forwards as necessary. 
 

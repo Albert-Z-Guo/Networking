@@ -20,18 +20,23 @@ class wildcat_receiver(threading.Thread):
         checksum = packet_byte_array[-2:]
         # print(packet_seq_num, data, checksum)
 
-        # check if data is corrupted
-        if sum(data).to_bytes(2, byteorder='big') == checksum:
-            ack_payload = (1).to_bytes(1, byteorder='big')
-            self.expected_packet_seq_num += 1
-            self.my_logger.commit(packet_byte_array)
+        # if data is not corrupted
+        if sum(packet_byte_array[:-2]).to_bytes(2, byteorder='big') == checksum:
+            # if the packet has expected sequence number
+            print('expected packet seq num:', self.expected_packet_seq_num)
+            if int.from_bytes(packet_seq_num, byteorder='big') == self.expected_packet_seq_num:
+                # send ack back to sender
+                ack_payload = self.expected_packet_seq_num.to_bytes(2, byteorder='big') + (1).to_bytes(1, byteorder='big')
+                ack = ack_payload + sum(ack_payload).to_bytes(2, byteorder='big')
+                print('ack_seq_num sent    :', self.expected_packet_seq_num)
+                self.my_tunnel.magic_send(bytearray(ack))
+                self.my_logger.commit(packet_byte_array) # deliver data
+                # self.my_logger.commit(self.expected_packet_seq_num)
+                self.expected_packet_seq_num += 1
+        # if data is corrupted
         else:
             ack_payload = (0).to_bytes(1, byteorder='big')
-            print('data corrupted')
-
-        # send ack back to sender
-        ack = self.expected_packet_seq_num.to_bytes(2, byteorder='big') + ack_payload + sum(ack_payload).to_bytes(2, byteorder='big')
-        self.my_tunnel.magic_send(bytearray(ack))
+            print('received packet corrupted:', int.from_bytes(packet_seq_num, byteorder='big'))
 
     def run(self):
         while not self.die:

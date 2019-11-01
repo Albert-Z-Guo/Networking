@@ -1,7 +1,7 @@
 # Selective Repeat and Go-Back-N Protocols
 
 ## Project Description
-This project implements Selective Repeat Protocol and Go-Back-N protocol. The emulated UDP connection is expected to drop and corrupt packets randomly.
+This project implements Selective Repeat and Go-Back-N protocols. The emulated UDP connection is expected to drop and corrupt packets randomly.
 
 ### Message format
 The sender will be called by user to send arbitrary payloads. Each payload will form a MSG packet and managed by the sender for delivery.

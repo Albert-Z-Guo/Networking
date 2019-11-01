@@ -16,9 +16,7 @@ class wildcat_receiver(threading.Thread):
 
     def receive(self, packet_byte_array):
         packet_seq_num = packet_byte_array[:2]
-        data = packet_byte_array[2:-2]
         checksum = packet_byte_array[-2:]
-        # print(packet_seq_num, data, checksum)
 
         # if data is not corrupted
         if sum(packet_byte_array[:-2]).to_bytes(2, byteorder='big') == checksum:
@@ -34,8 +32,7 @@ class wildcat_receiver(threading.Thread):
                 self.expected_packet_seq_num += 1
         # if data is corrupted
         else:
-            ack_payload = (0).to_bytes(1, byteorder='big')
-            print('received packet corrupted:', self.expected_packet_seq_num)
+            print('received packet corrupted')
 
     def run(self):
         while not self.die:

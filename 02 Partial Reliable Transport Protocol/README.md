@@ -12,7 +12,7 @@ The receiver will acknowledge the successful delivery of packets by sending ACK 
  - The first two bytes of each ACK packet should be the starting position of current receiver window. 
  - The last two bytes of each ACK packet should be the checksum that makes sure the packet is not corrupted. If a packet is corrupted, your receiver should drop that packet. 
 
-The payload of each ACK packet should be a bit map of the current receiver window status, with 1 denoting successful deliveries and 0 otherwise. From the ACK packet, the sender should be able to perceive the receiver's window status, and slide the window forwards as necessary. 
+The payload of each ACK packet should be a bit map of the current receiver window status, with `1` denoting successful deliveries and `0` otherwise. From the ACK packet, the sender should be able to perceive the receiver's window status, and slide the window forwards as necessary. 
 
 ### How to run
 #### To start the sender: <br/>

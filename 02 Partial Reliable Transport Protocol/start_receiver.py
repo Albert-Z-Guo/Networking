@@ -1,12 +1,14 @@
 import sys
+import select
 import socket
+import queue
+import time
+import threading
+import traceback
+
 import common
 import wildcat_receiver
-import select
-import threading
-import queue
-import traceback
-import time
+
 
 class UDP_receiver(threading.Thread):
     def __init__(self, port, my_tunnel):
@@ -19,7 +21,7 @@ class UDP_receiver(threading.Thread):
         self.my_tunnel = my_tunnel
         self.die = False
         self.peer_addr = (0, 0)
-    
+
     def run(self):
         while not self.die:
             try:
@@ -44,6 +46,7 @@ class UDP_receiver(threading.Thread):
         self.die = True
         super().join()
 
+
 if __name__ == '__main__':
     if(len(sys.argv) != 6):
         raise Exception("Wrong number of argument!")
@@ -56,13 +59,13 @@ if __name__ == '__main__':
 
     if(allowed_loss > 100 or allowed_loss < 0):
         raise Exception("allowed_loss our of range")
-    
+
     if(loss_rate > 100 or loss_rate < 0):
         raise Exception("loss_rate our of range")
 
     if(corrupt_rate > 100 or corrupt_rate < 0):
         raise Exception("corrupt_rate our of range")
-    
+
     my_logger = common.logger()
     my_tunnel = common.magic_tunnel(loss_rate, corrupt_rate)
     my_wildcat_receiver = wildcat_receiver.wildcat_receiver(allowed_loss, window_size, my_tunnel, my_logger)

@@ -1,7 +1,7 @@
 import queue
 import random
 
-log_file = "log.txt"
+log_file = "log/test.txt"
 
 class magic_tunnel:
     my_recv = None
@@ -11,7 +11,7 @@ class magic_tunnel:
         self.corrupt_rate = corrupt_rate
         self.send_queue = queue.Queue()
         self.recv_queue = queue.Queue()
-    
+
     def do_magic(self, packet_byte_array):
         loss = random.randint(0,100)
         corrupt = random.randint(0,100)
@@ -29,7 +29,7 @@ class magic_tunnel:
             # print("After corrupt: ")
             # print_bits(packet_byte_array)
         return packet_byte_array
-    
+
     def magic_send(self, packet_byte_array):
         pkt_to_send = self.do_magic(packet_byte_array)
         if pkt_to_send == None:
@@ -76,6 +76,6 @@ class logger:
         with open(self.my_log_file, 'a') as f:
             f.write(packet.__repr__())
             f.write("\n")
-    
+
     def get_commit_list(self):
         return self.commit_list

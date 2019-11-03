@@ -33,17 +33,17 @@ class wildcat_sender(threading.Thread):
             self.start_time = time.time() # start timer
             # resend all data in window
             for i in range(self.base, self.next_packet_seq_num, 1):
-                print('resending packet:', int.from_bytes(self.buffer[i-1][:2], byteorder='big'))
                 self.my_tunnel.magic_send(bytearray(self.buffer[i-1]))
+                print('resending packet:', int.from_bytes(self.buffer[i-1][:2], byteorder='big'))
 
     def receive(self, packet_byte_array):
-        ack_seq_num = packet_byte_array[:2]
-        checksum = packet_byte_array[-2:]
+        ack_seq_num =  int.from_bytes(packet_byte_array[:2], byteorder='big')
+        checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
 
         # if ack is not corrupted
-        if sum(packet_byte_array[:-2]).to_bytes(2, byteorder='big') == checksum:
-            self.base = int.from_bytes(ack_seq_num, byteorder='big') + 1
-            print('base now            :', self.base)
+        if sum(packet_byte_array[:-2]) == checksum:
+            self.base = ack_seq_num + 1
+            print('base now:', self.base)
             if self.base == self.next_packet_seq_num:
                 pass # stop timer
             else:
@@ -51,6 +51,7 @@ class wildcat_sender(threading.Thread):
         # if ack is corrupted
         else:
             print('ack corrupted')
+            self.my_tunnel.magic_send(bytearray(self.buffer[self.base-1])) # resend base packet
 
     def run(self):
         while not self.die:

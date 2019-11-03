@@ -5,6 +5,8 @@ import unittest
 import common
 import start_sender
 import start_receiver
+# import wildcat_sender_GBN as wildcat_sender
+# import wildcat_receiver_GBN as wildcat_receiver
 import wildcat_sender
 import wildcat_receiver
 

@@ -15,18 +15,18 @@ class wildcat_receiver(threading.Thread):
         self.expected_packet_seq_num = 1
 
     def receive(self, packet_byte_array):
-        packet_seq_num = packet_byte_array[:2]
-        checksum = packet_byte_array[-2:]
+        packet_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
+        checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
 
         # if data is not corrupted
-        if sum(packet_byte_array[:-2]).to_bytes(2, byteorder='big') == checksum:
+        if sum(packet_byte_array[:-2]) == checksum:
             # if the packet has expected sequence number
             print('expected packet seq num:', self.expected_packet_seq_num)
-            if int.from_bytes(packet_seq_num, byteorder='big') == self.expected_packet_seq_num:
+            if packet_seq_num == self.expected_packet_seq_num:
                 # send ack back to sender
                 ack_payload = self.expected_packet_seq_num.to_bytes(2, byteorder='big') + (1).to_bytes(1, byteorder='big')
-                ack = ack_payload + sum(ack_payload).to_bytes(2, byteorder='big')
-                print('ack_seq_num sent    :', self.expected_packet_seq_num)
+                ack = ack_payload + sum(ack_payload).to_bytes(2, byteorder='big') # append checksum
+                print('ack_seq_num sent:', self.expected_packet_seq_num)
                 self.my_tunnel.magic_send(bytearray(ack))
                 self.my_logger.commit(bytearray(packet_byte_array)) # deliver data
                 self.expected_packet_seq_num += 1

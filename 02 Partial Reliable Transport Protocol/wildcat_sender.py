@@ -61,7 +61,7 @@ class wildcat_sender(threading.Thread):
                         self.base += 1
                         print('sender base now:', self.base)
             else:
-                print('sender base: {} \tpacket {} ack outside window:'.format(self.base, ack_seq_num))
+                print('sender base: {} \tpacket {} ack outside window'.format(self.base, ack_seq_num))
         # if ack is corrupted
         else:
             print('ack corrupted')

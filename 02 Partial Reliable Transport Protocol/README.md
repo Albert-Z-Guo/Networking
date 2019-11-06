@@ -40,11 +40,11 @@ Parameters: <br/>
 `LOSS_RATE`: The rate at which packets will be dropped when sending and receiving <br/>
 `CORRUPT_RATE`: The rate at which packets will be corrupted when sending and receiving <br/>
  
-#### To run unit tests: <br/>
+#### To run the testing script: <br/>
 ```python
 python3 test.py
 ```
 
 ### Team Members:
 - Zunran Guo (ZGU682) [@Albert-Z-Guo](https://github.com/Albert-Z-Guo)
-- Manshan Lin (MLW3472) [@linmanshan](https://github.com/linmanshan)
+- Manshan Lin [@linmanshan](https://github.com/linmanshan)

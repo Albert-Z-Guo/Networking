@@ -1,7 +1,7 @@
 import queue
 import random
 
-log_file = "log/test.txt"
+log_file = "log/commit_list.txt"
 
 class magic_tunnel:
     my_recv = None

@@ -116,32 +116,5 @@ class TestReliableWithLossWithCorrupt(unittest.TestCase):
         assert sorted(send_list) == sorted(commit_list)
 
 
-class TestReliableWithoutLossWithCorruptAtScale(unittest.TestCase):
-    loss_rate = 0
-    corrupt_rate = 5
-    allowed_lost = 0
-    window_size = 20
-    ip = "localhost"
-    port = 8000
-    my_sender = None
-    my_receiver = None
-
-    def test_send_many_pkt(self):
-        log_file = "log/" + str(self.__class__.__name__) + "_" + str(inspect.stack()[0][3]) + '.txt'
-        timeout = 60 * 60 * 1
-        pkt_num = 66000
-        send_list = []
-        for i in range(pkt_num):
-            send_list = send_list + [bytearray([i % 256])]
-        commit_list = run_test(self.ip, self.port, self.allowed_lost, self.window_size, self.loss_rate, self.corrupt_rate, send_list, timeout, log_file)
-        print("Sent " + str(len(send_list)) + " packets, received " + str(len(commit_list)) + " packets")
-
-        with open('log/send_list.txt', 'w') as f:
-            for pkt in send_list:
-                f.write('{}\n'.format(pkt))
-
-        assert sorted(send_list) == sorted(commit_list)
-
-
 if __name__ == '__main__':
     unittest.main()

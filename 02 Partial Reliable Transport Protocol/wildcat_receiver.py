@@ -40,7 +40,7 @@ class wildcat_receiver(threading.Thread):
                     self.base += 1
                     while self.base in self.buffer.keys():
                         self.my_logger.commit(copy.copy(self.buffer[self.base][2:-2]))
-                        del self.buffer[self.base]
+                        del self.buffer[self.base] # save memory
                         self.base += 1
                         print('receiver base now:', self.base)
                 # buffer packet

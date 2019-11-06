@@ -1,3 +1,4 @@
+import copy
 import time
 import threading
 
@@ -29,7 +30,7 @@ class wildcat_receiver(threading.Thread):
                 ack = ack_payload + sum(ack_payload).to_bytes(2, byteorder='big') # append checksum
                 print('ack_seq_num sent:', self.expected_packet_seq_num)
                 self.my_tunnel.magic_send(bytearray(ack))
-                self.my_logger.commit(bytearray(packet_byte_array)) # deliver data
+                self.my_logger.commit(copy.copy(packet_byte_array[2:-2])) # deliver data
                 self.expected_packet_seq_num += 1
         # if data is corrupted
         else:

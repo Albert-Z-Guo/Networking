@@ -1,7 +1,8 @@
 import time
+import threading
 
 import common
-import threading
+
 
 class wildcat_receiver(threading.Thread):
     def __init__(self, allowed_loss, window_size, my_tunnel, my_logger):

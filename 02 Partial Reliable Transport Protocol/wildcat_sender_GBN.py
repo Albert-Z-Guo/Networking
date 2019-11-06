@@ -1,7 +1,9 @@
+import copy
 import time
+import threading
 
 import common
-import threading
+
 
 class wildcat_sender(threading.Thread):
     def __init__(self, allowed_loss, window_size, my_tunnel, my_logger):
@@ -33,7 +35,7 @@ class wildcat_sender(threading.Thread):
             self.start_time = time.time() # start timer
             # resend all data in window
             for i in range(self.base, self.next_packet_seq_num, 1):
-                self.my_tunnel.magic_send(bytearray(self.buffer[i-1]))
+                self.my_tunnel.magic_send(copy.copy(self.buffer[i-1]))
                 print('resending packet:', int.from_bytes(self.buffer[i-1][:2], byteorder='big'))
 
     def receive(self, packet_byte_array):
@@ -51,7 +53,7 @@ class wildcat_sender(threading.Thread):
         # if ack is corrupted
         else:
             print('ack corrupted')
-            self.my_tunnel.magic_send(bytearray(self.buffer[self.base-1])) # resend base packet
+            self.my_tunnel.magic_send(copy.copy(self.buffer[self.base-1])) # resend base packet
 
     def run(self):
         while not self.die:
@@ -59,9 +61,9 @@ class wildcat_sender(threading.Thread):
             if self.next_packet_seq_num - 1 < len(self.buffer):
                 # send data if the next available sequence number is within window
                 if self.next_packet_seq_num < self.base + self.window_size:    
-                    print('sending packet...\tbase:', self.base, '\tnext_packet_seq_num:', self.next_packet_seq_num)
+                    print('sender base:', self.base, 'sending packet:', self.next_packet_seq_num)
                     data = self.buffer[self.next_packet_seq_num-1]
-                    self.my_tunnel.magic_send(bytearray(data))
+                    self.my_tunnel.magic_send(copy.copy(data))
                     if self.base == self.next_packet_seq_num:
                         self.start_time = time.time() # start timer
                     self.next_packet_seq_num += 1

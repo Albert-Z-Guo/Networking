@@ -23,11 +23,12 @@ class wildcat_sender(threading.Thread):
         self.timeout_threshold = 0.5
 
     def new_packet(self, packet_byte_array):
+        packet = copy.copy(packet_byte_array) # make a copy so that it does not modify the original bytearray object
         packet_seq_num = (self.packet_seq_num % 65536).to_bytes(2, byteorder='big')
-        packet_byte_array[0:0] = packet_seq_num # insert sequence number in bytearray
-        checksum = sum(packet_byte_array).to_bytes(2, byteorder='big')
-        packet_byte_array += checksum # append checksum
-        self.buffer[self.packet_seq_num] = packet_byte_array
+        packet[0:0] = packet_seq_num # insert sequence number in bytearray
+        checksum = sum(packet).to_bytes(2, byteorder='big')
+        packet += checksum # append checksum
+        self.buffer[self.packet_seq_num] = packet
         self.packet_seq_num += 1
 
     def check_time(self):

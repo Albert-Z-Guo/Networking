@@ -36,17 +36,17 @@ class wildcat_receiver(threading.Thread):
                 # if the packet's sequence number is the base, this packet and 
                 # any previously buffered and consecutively numbered packets are delivered
                 if packet_seq_num == self.base:
-                    self.my_logger.commit(bytearray(packet_byte_array))
+                    self.my_logger.commit(copy.copy(packet_byte_array[2:-2]))
                     self.base += 1
                     while self.base in self.buffer.keys():
-                        self.my_logger.commit(bytearray(self.buffer[self.base]))
+                        self.my_logger.commit(self.buffer[self.base][2:-2])
                         del self.buffer[self.base]
                         self.base += 1
                         print('receiver base now:', self.base)
                 # buffer packet
                 else:
                     print('buffer received packet:', packet_seq_num)
-                    self.buffer[packet_seq_num] = packet_byte_array
+                    self.buffer[packet_seq_num] = copy.copy(packet_byte_array)
             
             # send duplicated ack
             elif self.base - self.window_size <= packet_seq_num < self.base:

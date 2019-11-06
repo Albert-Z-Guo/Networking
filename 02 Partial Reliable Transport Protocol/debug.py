@@ -1,5 +1,5 @@
 commit_list = []
-with open('log/TestReliableWithoutLossWithoutCorruptAtScale_test_send_many_pkt.txt', 'r') as f:
+with open('log/TestReliableWithoutLossWithCorruptAtScale.txt', 'r') as f:
     for line in f:
         commit_list.append(line) 
 

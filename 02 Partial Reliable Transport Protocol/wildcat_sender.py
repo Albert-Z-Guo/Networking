@@ -42,16 +42,15 @@ class wildcat_sender(threading.Thread):
     def receive(self, packet_byte_array):
         ack_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
         checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
-        
         # if ack is not corrupted
         if sum(packet_byte_array[:-2]) == checksum:
-        
             # if sequence number wrap-around happens
             if ack_seq_num < self.base - self.window_size*2:
                 ack_seq_num += (self.base + self.window_size) // 65536 * 65536
-
             print('packet {} ack arrived'.format(ack_seq_num))
-            if self.base <= ack_seq_num < self.base + self.window_size: # if packet is in the window
+            
+            # if packet is in the window
+            if self.base <= ack_seq_num < self.base + self.window_size:
                 self.acks.add(ack_seq_num) # mark packet as received
                 print('\t\t\t\t\tpacket {} received'.format(ack_seq_num))
                 # self.packet_times[ack_seq_num] = time.time() # update time

@@ -20,7 +20,6 @@ class wildcat_receiver(threading.Thread):
     def receive(self, packet_byte_array):
         packet_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
         checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
-
         # if data is not corrupted
         if sum(packet_byte_array[:-2]) == checksum:
             ack_payload = packet_seq_num.to_bytes(2, byteorder='big') + (1).to_bytes(1, byteorder='big')
@@ -29,7 +28,8 @@ class wildcat_receiver(threading.Thread):
             # if sequence number wrap-around happens
             if packet_seq_num < self.base - self.window_size*2:
                 packet_seq_num += (self.base + self.window_size) // 65536 * 65536
-
+            
+            # if packet is in the window
             if self.base <= packet_seq_num < self.base + self.window_size:
                 self.my_tunnel.magic_send(bytearray(ack))
                 print('ack_seq_num sent:', packet_seq_num)

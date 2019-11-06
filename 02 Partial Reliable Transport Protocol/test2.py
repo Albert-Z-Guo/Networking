@@ -134,7 +134,7 @@ class TestUnreliableWithLossWithCorrupt(unittest.TestCase):
 
     def test_send_100_pkt(self):
         log_file = "log/" + str(self.__class__.__name__) + "_" + str(inspect.stack()[0][3]) + '.txt'
-        timeout = 30
+        timeout = 35
         pkt_num = 100
         send_list = []
         for i in range(pkt_num):
@@ -156,7 +156,7 @@ class TestReliableWithoutLossWithCorruptAtScale(unittest.TestCase):
 
     def test_send_66000_pkt(self):
         log_file = "log/" + str(self.__class__.__name__) + "_" + str(inspect.stack()[0][3]) + '.txt'
-        timeout = 60 * 60 * 0.9
+        timeout = 60 * 60 * 0.7
         pkt_num = 66000
         # timeout = 150
         # pkt_num = 100

@@ -1,4 +1,6 @@
+import binascii
 import copy
+import math
 import time
 import threading
 
@@ -13,17 +15,20 @@ class wildcat_receiver(threading.Thread):
         self.my_tunnel = my_tunnel
         self.my_logger = my_logger
         self.die = False
-        # add as needed
         self.base = 1 # window base
         self.buffer = {} # buffer of received packets in window
 
+    # 16 bit cyclic redundancy check (CRC) for 2-bit error (note that sending and receiving each may introduce 1 bit error)
+    def crc_check(self, data_bytes, remainder_bytes):
+        check_bin = bin(int.from_bytes(data_bytes, byteorder='big'))[2:] + bin(int.from_bytes(remainder_bytes, byteorder='big'))[2:].zfill(16) # check_bin = data_bin + remainder_bin
+        return binascii.crc_hqx(int(check_bin, 2).to_bytes(math.ceil(len(check_bin) / 8), byteorder='big'), 0) == 0
+
     def receive(self, packet_byte_array):
-        packet_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
-        checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
         # if data is not corrupted
-        if sum(packet_byte_array[:-2]) == checksum:
+        if self.crc_check(packet_byte_array[:-2], packet_byte_array[-2:]):
+            packet_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
             ack_payload = packet_seq_num.to_bytes(2, byteorder='big') + (1).to_bytes(1, byteorder='big')
-            ack = ack_payload + sum(ack_payload).to_bytes(2, byteorder='big')
+            ack = ack_payload + binascii.crc_hqx(ack_payload, 0).to_bytes(2, byteorder='big')
             
             # if sequence number wrap-around happens
             if packet_seq_num < self.base - self.window_size*2:
@@ -45,8 +50,8 @@ class wildcat_receiver(threading.Thread):
                         print('receiver base now:', self.base)
                 # buffer packet
                 else:
-                    print('buffer received packet:', packet_seq_num)
                     self.buffer[packet_seq_num] = copy.copy(packet_byte_array)
+                    print('buffer received packet:', packet_seq_num)
             
             # send duplicated ack
             elif self.base - self.window_size <= packet_seq_num < self.base:

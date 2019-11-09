@@ -1,9 +1,10 @@
+import binascii
 import copy
+import math
 import time
 import threading
 
 import common
-
 
 class wildcat_sender(threading.Thread):
     def __init__(self, allowed_loss, window_size, my_tunnel, my_logger):
@@ -13,7 +14,6 @@ class wildcat_sender(threading.Thread):
         self.my_tunnel = my_tunnel
         self.my_logger = my_logger
         self.die = False
-        # add as needed
         self.buffer = {} # buffer of data to send
         self.packet_seq_num = 1
         self.next_packet_seq_num = 1
@@ -22,11 +22,16 @@ class wildcat_sender(threading.Thread):
         self.acks = set() # packet acknowledgements
         self.timeout_threshold = 0.5
 
+    # 16 bit cyclic redundancy check (CRC) for 2-bit error (note that sending and receiving each may introduce 1 bit error)
+    def crc_check(self, data_bytes, remainder_bytes):
+        check_bin = bin(int.from_bytes(data_bytes, byteorder='big'))[2:] + bin(int.from_bytes(remainder_bytes, byteorder='big'))[2:].zfill(16)
+        return binascii.crc_hqx(int(check_bin, 2).to_bytes(math.ceil(len(check_bin) / 8), byteorder='big'), 0) == 0
+
     def new_packet(self, packet_byte_array):
         packet = copy.copy(packet_byte_array) # make a copy so that it does not modify the original bytearray object
         packet_seq_num = (self.packet_seq_num % 65536).to_bytes(2, byteorder='big')
         packet[0:0] = packet_seq_num # insert sequence number in bytearray
-        checksum = sum(packet).to_bytes(2, byteorder='big')
+        checksum = binascii.crc_hqx(packet, 0).to_bytes(2, byteorder='big')
         packet += checksum # append checksum
         self.buffer[self.packet_seq_num] = packet
         self.packet_seq_num += 1
@@ -40,15 +45,14 @@ class wildcat_sender(threading.Thread):
                 print('resending packet:', int.from_bytes(self.buffer[packet_num][:2], byteorder='big'))
 
     def receive(self, packet_byte_array):
-        ack_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
-        checksum = int.from_bytes(packet_byte_array[-2:], byteorder='big')
         # if ack is not corrupted
-        if sum(packet_byte_array[:-2]) == checksum:
+        if self.crc_check(packet_byte_array[:-2], packet_byte_array[-2:]):
+            ack_seq_num = int.from_bytes(packet_byte_array[:2], byteorder='big')
+            
             # if sequence number wrap-around happens
             if ack_seq_num < self.base - self.window_size*2:
                 ack_seq_num += (self.base + self.window_size) // 65536 * 65536
-            print('packet {} ack arrived'.format(ack_seq_num))
-            
+
             # if packet is in the window
             if self.base <= ack_seq_num < self.base + self.window_size:
                 self.acks.add(ack_seq_num) # mark packet as received

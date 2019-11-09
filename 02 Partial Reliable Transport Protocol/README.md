@@ -1,7 +1,7 @@
 # Selective Repeat and Go-Back-N Protocols
 
 ## Project Description
-This project implements Selective Repeat and Go-Back-N protocols. The emulated UDP connection is expected to drop and corrupt packets randomly.
+This project implements Selective Repeat and Go-Back-N protocols. The emulated UDP connection is expected to drop and corrupt packets randomly. Note that Selective Repeat Protocol also uses [cyclic redundancy check](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) for error dedection instead of simple checksum.
 
 ### Message format
 The sender will be called by user to send arbitrary payloads. Each payload will form a MSG packet and managed by the sender for delivery.

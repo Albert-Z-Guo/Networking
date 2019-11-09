@@ -1,5 +1,5 @@
 commit_list = []
-with open('log/TestReliableWithoutLossWithCorruptAtScale.txt', 'r') as f:
+with open('log/TestReliableWithoutLossWithCorruptAtScale_test_send_66000_pkt.txt', 'r') as f:
     for line in f:
         commit_list.append(line) 
 
@@ -8,7 +8,7 @@ with open('log/send_list.txt', 'r') as f2:
     for line in f2:
         send_list.append(line)
 
-
+# check output consistency
 for i in range(len(commit_list)):
     if commit_list[i] != send_list[i]:
         print(i, commit_list[i].strip(), send_list[i])

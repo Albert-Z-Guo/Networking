@@ -57,7 +57,7 @@ def run_sender(ip, port, allowed_lost, window_size, loss_rate, corrupt_rate, sen
 def run_test(ip, port, allowed_lost, window_size, loss_rate, corrupt_rate, send_list, timeout, log_file):
     my_receiver = receiver(port, allowed_lost, window_size, loss_rate, corrupt_rate, log_file)
     
-    p = Process(target=run_sender, args=(ip, port, allowed_lost, window_size, loss_rate, corrupt_rate, send_list, timeout,))
+    p = Process(target=run_sender, args=(ip, port, allowed_lost, window_size, loss_rate, corrupt_rate, send_list, timeout))
     p.start()
     
     time.sleep(timeout)
@@ -66,7 +66,7 @@ def run_test(ip, port, allowed_lost, window_size, loss_rate, corrupt_rate, send_
     p.join()
     return commit_list
 
-'''
+
 class TestReliableNoLossNoCorrupt(unittest.TestCase):
     loss_rate = 0
     corrupt_rate = 0
@@ -142,7 +142,7 @@ class TestUnreliableWithLossWithCorrupt(unittest.TestCase):
         commit_list = run_test(self.ip, self.port, self.allowed_lost, self.window_size, self.loss_rate, self.corrupt_rate, send_list, timeout, log_file)
         print("Sent " + str(len(send_list)) + " packets, received " + str(len(commit_list)) + " packets")
         assert (len(commit_list) / len(send_list)) * 100 > (100 - self.allowed_lost)
-'''
+
 
 class TestReliableWithoutLossWithCorruptAtScale(unittest.TestCase):
     loss_rate = 0
@@ -171,6 +171,7 @@ class TestReliableWithoutLossWithCorruptAtScale(unittest.TestCase):
                 f.write('{}\n'.format(pkt))
 
         assert sorted(send_list) == sorted(commit_list)
+
 
 if __name__ == '__main__':
     unittest.main()

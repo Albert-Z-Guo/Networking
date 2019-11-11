@@ -158,8 +158,6 @@ class TestReliableWithoutLossWithCorruptAtScale(unittest.TestCase):
         log_file = "log/" + str(self.__class__.__name__) + "_" + str(inspect.stack()[0][3]) + '.txt'
         timeout = 60 * 60 * 0.7
         pkt_num = 66000
-        # timeout = 150
-        # pkt_num = 100
         send_list = []
         for i in range(pkt_num):
             send_list = send_list + [bytearray([i % 256])]

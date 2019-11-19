@@ -42,12 +42,14 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
 
         # TODO: read the packet and parse the source IP address, you will need this part for traceroute
         print(recPacket, addr)
-        print(len(recPacket))
-        print(recPacket[20:21], recPacket[21:22], recPacket[22:24], recPacket[24:26], recPacket[26:28])
+        ip_header = recPacket[:20]
 
         # TODO: calculate and return the round trip time for this ping
+        print('TTL:', struct.unpack('@B', ip_header[8:9])[0])
 
         # TODO: handle different response type and error code, display error message to the user
+        print('header checksum:', struct.unpack('@H', ip_header[10:12]))
+        print('actual header checksum:', checksum(ip_header[:10].decode("utf-8")))
 
 
 def send_one_ping(mySocket, destAddr, ID):

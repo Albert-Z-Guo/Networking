@@ -7,6 +7,7 @@ import time
 
 
 ICMP_ECHO_REQUEST = 8
+RTTs = []
 
 
 def checksum(string):
@@ -41,39 +42,57 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         recPacket, addr = mySocket.recvfrom(1024)
 
         # read the packet and parse the source IP address, you will need this part for traceroute
-        ip_version = bin(struct.unpack('@B', recPacket[0:1])[0])[2:].zfill(8)[:4]
+        ip_version = bin(struct.unpack('B', recPacket[0:1])[0])[2:].zfill(8)[:4]
         print('ip_version:', int(ip_version, 2))
 
+        # calculate and return the round trip time for this ping
         if int(ip_version, 2) == 4:
-            TTL = struct.unpack('@B', recPacket[8:9])[0]    
-            print('TTL:', TTL)
+            print('TTL:', struct.unpack('B', recPacket[8:9])[0])
             icmp_header = recPacket[20:28]
-            icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('@BBHHH', icmp_header)
-            print('icmp_type:', icmp_type)
-            print('icmp_code:', icmp_code)
-            print('icmp_chechsum:', icmp_chechsum)
-            print('icmp_id:', icmp_id)
-            print('icmp_seq:', icmp_seq)
-
-            # calculate and return the round trip time for this ping
-            time_sent = struct.unpack('@d', recPacket[28:])[0]
-            RTT = time.time() - time_sent
-            print('RTT: {:.3f}s'.format(RTT))
-        
-            # handle different response type and error code, display error message to the user        
-            if icmp_type == 3:
-                raise('destination unreachable')
-            elif icmp_type != 0:
-                raise('type error')
-        
+            RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
         elif int(ip_version, 2) == 6:
-            pass
+            print('hop_limit:', struct.unpack('B', recPacket[7:8])[0])
+            icmp_header = recPacket[40:48]
+            RTT = time.time() - struct.unpack('d', recPacket[48:56])[0]
+
+        # handle different response type and error code, display error message to the user
+        icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', icmp_header)
+        print('icmp_type:', icmp_type)
+        print('icmp_code:', icmp_code)
+        print('icmp_chechsum:', icmp_chechsum)
+        print('icmp_id:', icmp_id)
+        print('icmp_seq:', icmp_seq)
+
+        if icmp_type == 0:
+            print('ICMP Type 0: Echo Reply')
+        elif icmp_type == 3:
+            print('ICMP Type 3: Destination Unreachable\nDescription:')
+            if icmp_code == 0: print('Net Unreachable')
+            if icmp_code == 1: print('Host Unreachable')
+            if icmp_code == 2: print('Protocol Unreachable')
+            if icmp_code == 3: print('Port Unreachable')
+            if icmp_code == 4: print("Fragmentation Needed and Don't Fragment was Set")
+            if icmp_code == 5: print('Source Route Failed')
+            if icmp_code == 6: print('Destination Network Unknown')
+            if icmp_code == 7: print('Destination Host Unknown')
+            if icmp_code == 8: print('Source Host Isolated')
+            if icmp_code == 9: print('Communication with Destination Network is Administratively Prohibited')
+            if icmp_code == 10: print('Communication with Destination Host is Administratively Prohibited')
+            if icmp_code == 11: print('Destination Network Unreachable for Type of Service')
+            if icmp_code == 12: print('Destination Host Unreachable for Type of Service')
+            if icmp_code == 13: print('Communication Administratively Prohibited')
+            if icmp_code == 14: print('Host Precedence Violation')
+            if icmp_code == 15: print('Precedence cutoff in effect')
+        else:
+            print('ICMP Type {}'.format(icmp_type))
         
-        # test
+        # tests
         ip_header = recPacket[:20]
         print('header checksum:', struct.unpack('@H', ip_header[10:12])[0])
         print('actual header checksum:', checksum(ip_header[:10]))
+        print()
         
+        RTTs.append(RTT)
         return RTT
 
 
@@ -129,4 +148,10 @@ def ping(host, timeout=1):
 
 
 if __name__ == "__main__":
-    ping(sys.argv[1])
+    try:
+        ping(sys.argv[1])
+    finally:
+        print('\n--- Round-trip Time  (RTT) statistics ---')
+        print('min RTT : {:5f}s'.format(min(RTTs)))
+        print('max RTT : {:5f}s'.format(max(RTTs)))
+        print('mean RTT: {:5f}s'.format(sum(RTTs)/len(RTTs)))

@@ -1,10 +1,10 @@
-import socket
 import os
-import sys
-import struct
-import time
 import select
-import binascii
+import socket
+import struct
+import sys
+import time
+
 
 ICMP_ECHO_REQUEST = 8
 
@@ -40,16 +40,41 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
             return "Request timed out."
         recPacket, addr = mySocket.recvfrom(1024)
 
-        # TODO: read the packet and parse the source IP address, you will need this part for traceroute
-        print(recPacket, addr)
+        # read the packet and parse the source IP address, you will need this part for traceroute
+        ip_version = bin(struct.unpack('@B', recPacket[0:1])[0])[2:].zfill(8)[:4]
+        print('ip_version:', int(ip_version, 2))
+
+        if int(ip_version, 2) == 4:
+            TTL = struct.unpack('@B', recPacket[8:9])[0]    
+            print('TTL:', TTL)
+            icmp_header = recPacket[20:28]
+            icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('@BBHHH', icmp_header)
+            print('icmp_type:', icmp_type)
+            print('icmp_code:', icmp_code)
+            print('icmp_chechsum:', icmp_chechsum)
+            print('icmp_id:', icmp_id)
+            print('icmp_seq:', icmp_seq)
+
+            # calculate and return the round trip time for this ping
+            time_sent = struct.unpack('@d', recPacket[28:])[0]
+            RTT = time.time() - time_sent
+            print('RTT: {:.3f}s'.format(RTT))
+        
+            # handle different response type and error code, display error message to the user        
+            if icmp_type == 3:
+                raise('destination unreachable')
+            elif icmp_type != 0:
+                raise('type error')
+        
+        elif int(ip_version, 2) == 6:
+            pass
+        
+        # test
         ip_header = recPacket[:20]
-
-        # TODO: calculate and return the round trip time for this ping
-        print('TTL:', struct.unpack('@B', ip_header[8:9])[0])
-
-        # TODO: handle different response type and error code, display error message to the user
-        print('header checksum:', struct.unpack('@H', ip_header[10:12]))
-        print('actual header checksum:', checksum(ip_header[:10].decode("utf-8")))
+        print('header checksum:', struct.unpack('@H', ip_header[10:12])[0])
+        print('actual header checksum:', checksum(ip_header[:10]))
+        
+        return RTT
 
 
 def send_one_ping(mySocket, destAddr, ID):
@@ -103,4 +128,5 @@ def ping(host, timeout=1):
     return delay
 
 
-ping("google.com")
+if __name__ == "__main__":
+    ping(sys.argv[1])

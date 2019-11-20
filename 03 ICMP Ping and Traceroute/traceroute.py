@@ -1,10 +1,10 @@
-import socket
 import os
-import sys
-import struct
-import time
 import select
-import binascii
+import socket
+import struct
+import sys
+import time
+
 
 ICMP_ECHO_REQUEST = 8
 MAX_HOPS = 30
@@ -66,29 +66,36 @@ def get_route(hostname):
     timeLeft = TIMEOUT
     for ttl in range(1, MAX_HOPS):
         for tries in range(TRIES):
-
-            # TODO: create ICMP socket, connect to destination IP, set timeout and time-to-live
+            # create ICMP socket, connect to destination IP, set timeout and time-to-live
+            icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
 
             try:
-
-                # TODO: create ICMP ping packet, record the time delay of getting response detect timeout
-
-                pass
-
+                # create ICMP ping packet, record the time delay of getting response detect timeout
+                icmp_socket.sendto(build_packet(), (destAddr, 1))
+                recPacket, addr = icmp_socket.recvfrom(1024)
+                ip_version = bin(struct.unpack('@B', recPacket[0:1])[0])[2:].zfill(8)[:4]
+                if int(ip_version, 2) == 4:
+                    time_sent = struct.unpack('@d', recPacket[28:])[0]
+                    RTT = time.time() - time_sent
+                    print('RTT: {:.3f}s'.format(RTT))
             except:
                 continue
             else:
+                # parse and handle different response type
+                if int(ip_version, 2) == 4:
+                    icmp_header = recPacket[20:28]
+                    icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('@BBHHH', icmp_header)
+                    if icmp_type == 3:
+                        raise('destination unreachable')
+                    elif icmp_type != 0:
+                        raise('type error')
 
-                # TODO: parse and handle different response type
                 # Hint: use wireshark to get the byte location of the response type
 
-                pass
-
             finally:
-
-                # TODO: close the socket
-
-                pass
+                # close the socket
+                icmp_socket.close()
 
 
-get_route("google.com")
+if __name__ == "__main__":
+    get_route(sys.argv[1])

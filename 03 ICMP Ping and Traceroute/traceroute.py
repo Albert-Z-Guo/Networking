@@ -6,7 +6,7 @@ import struct
 import sys
 import time
 
-from ping import receive_one_ping
+from ping import *
 
 
 ICMP_ECHO_REQUEST = 8
@@ -70,16 +70,17 @@ def build_packet():
 
 
 def get_route(hostname):
-    icmp = socket.getprotobyname("icmp")
+    # icmp = socket.getprotobyname("icmp")
     # timeLeft = TIMEOUT
     for ttl in range(1, MAX_HOPS):
         for tries in range(TRIES):
             # create ICMP socket, connect to destination IP, set timeout and time-to-live
-            icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
+            icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
 
             try:
                 # create ICMP ping packet, record the time delay of getting response detect timeout
                 icmp_socket.sendto(build_packet(), (hostname, 1))
+                # send_one_ping(icmp_socket, host, tries)
                 RTT = receive_one_ping(icmp_socket, tries, TIMEOUT, hostname)
                 print(RTT)
             except:

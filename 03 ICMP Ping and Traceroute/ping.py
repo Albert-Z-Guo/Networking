@@ -1,4 +1,6 @@
+from __future__ import division
 from collections import defaultdict
+from math import sqrt
 import os
 import select
 import socket
@@ -6,9 +8,9 @@ import struct
 import sys
 import time
 
-
 ICMP_ECHO_REQUEST = 8
 ID_RTTs_dict = defaultdict(list)
+NUM_PACKETS_SENT = 0
 
 
 def checksum(string):
@@ -44,7 +46,7 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
 
         # read the packet and parse the source IP address, you will need this part for traceroute
         ip_version = int(bin(struct.unpack('B', recPacket[0:1])[0])[2:].zfill(8)[:4], 2)
-        print('IP version: {}'.format(ip_version))
+        print('\nIP version: {}'.format(ip_version))
         
         # calculate and return the round trip time for this ping
         if ip_version == 4:
@@ -92,10 +94,8 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
             print('ICMP Code {}'.format(icmp_code))
         
         # tests
-        ip_header = recPacket[:20]
-        print('header checksum: {}'.format(struct.unpack('@H', ip_header[10:12])[0]))
-        print('actual header checksum: {}'.format(checksum(ip_header[:10])))
-        print('')
+        print('header checksum: {}'.format(struct.unpack('H', recPacket[10:12])[0]))
+        print('actual checksum: {}'.format(checksum(str(recPacket[:10] + recPacket[12:]))))
         
         if ip_version == 6: return 'hop_limit: ' + str(struct.unpack('B', recPacket[7:8])[0])
         return 'RTT: {:.5f}s'.format(RTT)
@@ -105,8 +105,6 @@ def send_one_ping(mySocket, destAddr, ID):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
     myChecksum = 0
     # Make a dummy header with a 0 checksum
-
-    # struct -- Interpret strings as packed binary data
     header = struct.pack('bbHHh', ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     data = struct.pack('d', time.time())
     # Calculate the checksum on the data and the dummy header.
@@ -123,6 +121,8 @@ def send_one_ping(mySocket, destAddr, ID):
     # AF_INET address must be tuple, not str # Both LISTS and TUPLES consist of a number of objects
     mySocket.sendto(packet, (destAddr, 1))
     # which can be referenced by their position number within the object.
+    global NUM_PACKETS_SENT
+    NUM_PACKETS_SENT += 1
 
 
 def do_one_ping(destAddr, timeout):
@@ -156,8 +156,12 @@ if __name__ == '__main__':
     try:
         ping(sys.argv[1])
     except KeyboardInterrupt:
-        print('\n--- Round-trip Time  (RTT) statistics ---')
         RTTs = ID_RTTs_dict[os.getpid() & 0xFFFF]
-        print('min RTT : {:5f}s'.format(min(RTTs)))
-        print('max RTT : {:5f}s'.format(max(RTTs)))
-        print('mean RTT: {:5f}s'.format(sum(RTTs)/len(RTTs)))
+        RTT_avg = sum(RTTs)/len(RTTs)
+        RTT_var = sum(pow(RTT - RTT_avg, 2) for RTT in RTTs) / len(RTTs)
+        print('\n--- {} ping statistics ---'.format(sys.argv[1]))
+        print('{} packets transmitted, {} packets received, {:.1%} packet loss'.format(NUM_PACKETS_SENT, len(RTTs), (NUM_PACKETS_SENT-len(RTTs))/NUM_PACKETS_SENT))
+        print('Round-trip min: {:.3f} ms'.format(min(RTTs)*1000))
+        print('Round-trip avg: {:.3f} ms'.format(RTT_avg*1000))
+        print('Round-trip max: {:.3f} ms'.format(max(RTTs)*1000))
+        print('Round-trip std: {:.3f} ms'.format(sqrt(RTT_var)*1000))

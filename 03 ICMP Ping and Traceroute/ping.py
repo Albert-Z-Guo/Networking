@@ -50,12 +50,12 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         if ip_version == 4:
             print('TTL:', struct.unpack('B', recPacket[8:9])[0])
             RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
+            # if ID == icmp_id: ID_RTTs_dict[ID].append(RTT)
+            ID_RTTs_dict[ID].append(RTT)
             icmp_header = recPacket[20:28]
             source_address = recPacket[12:16]
             
         elif ip_version == 6:
-            print('hop_limit:', struct.unpack('B', recPacket[7:8])[0])
-            RTT = time.time() - struct.unpack('d', recPacket[48:56])[0]
             icmp_header = recPacket[40:48]
             source_address = recPacket[8:24]
         
@@ -98,9 +98,8 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         print('actual header checksum:', checksum(ip_header[:10]))
         print()
         
-        # if ID == icmp_id: ID_RTTs_dict[ID].append(RTT)
-        ID_RTTs_dict[icmp_id].append(RTT) 
-        return RTT
+        if ip_version == 6: return 'hop_limit: ' + str(struct.unpack('B', recPacket[7:8])[0])
+        return 'RTT: {:.5f}s'.format(RTT)
 
 
 def send_one_ping(mySocket, destAddr, ID):

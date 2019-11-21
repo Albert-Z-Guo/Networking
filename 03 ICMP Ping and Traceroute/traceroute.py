@@ -81,7 +81,7 @@ def get_route(hostname):
                 # create ICMP ping packet, record the time delay of getting response detect timeout
                 icmp_socket.sendto(build_packet(), (hostname, 1))
                 RTT = receive_one_ping(icmp_socket, tries, TIMEOUT, hostname)
-                print('RTT: {:.3f}s'.format(RTT))
+                print(RTT)
             except:
                 continue
             else:

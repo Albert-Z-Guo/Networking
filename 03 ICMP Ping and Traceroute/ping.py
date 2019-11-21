@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import select
 import socket
@@ -7,7 +8,7 @@ import time
 
 
 ICMP_ECHO_REQUEST = 8
-RTTs = []
+ID_RTTs_dict = defaultdict(list)
 
 
 def checksum(string):
@@ -42,18 +43,23 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         recPacket, addr = mySocket.recvfrom(1024)
 
         # read the packet and parse the source IP address, you will need this part for traceroute
-        ip_version = bin(struct.unpack('B', recPacket[0:1])[0])[2:].zfill(8)[:4]
-        print('ip_version:', int(ip_version, 2))
-
+        ip_version = int(bin(struct.unpack('B', recPacket[0:1])[0])[2:].zfill(8)[:4], 2)
+        print('ip_version:', ip_version)
+        
         # calculate and return the round trip time for this ping
-        if int(ip_version, 2) == 4:
+        if ip_version == 4:
             print('TTL:', struct.unpack('B', recPacket[8:9])[0])
-            icmp_header = recPacket[20:28]
             RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
-        elif int(ip_version, 2) == 6:
+            icmp_header = recPacket[20:28]
+            source_address = recPacket[12:16]
+            
+        elif ip_version == 6:
             print('hop_limit:', struct.unpack('B', recPacket[7:8])[0])
-            icmp_header = recPacket[40:48]
             RTT = time.time() - struct.unpack('d', recPacket[48:56])[0]
+            icmp_header = recPacket[40:48]
+            source_address = recPacket[8:24]
+        
+        print('source_address:', source_address)
 
         # handle different response type and error code, display error message to the user
         icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', icmp_header)
@@ -92,7 +98,8 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         print('actual header checksum:', checksum(ip_header[:10]))
         print()
         
-        RTTs.append(RTT)
+        # if ID == icmp_id: ID_RTTs_dict[ID].append(RTT)
+        ID_RTTs_dict[icmp_id].append(RTT) 
         return RTT
 
 
@@ -150,8 +157,9 @@ def ping(host, timeout=1):
 if __name__ == "__main__":
     try:
         ping(sys.argv[1])
-    finally:
+    except KeyboardInterrupt:
         print('\n--- Round-trip Time  (RTT) statistics ---')
+        RTTs = ID_RTTs_dict[os.getpid() & 0xFFFF]
         print('min RTT : {:5f}s'.format(min(RTTs)))
         print('max RTT : {:5f}s'.format(max(RTTs)))
         print('mean RTT: {:5f}s'.format(sum(RTTs)/len(RTTs)))

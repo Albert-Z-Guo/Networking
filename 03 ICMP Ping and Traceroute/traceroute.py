@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import select
 import socket
@@ -5,12 +6,19 @@ import struct
 import sys
 import time
 
+from ping import receive_one_ping
+
 
 ICMP_ECHO_REQUEST = 8
 MAX_HOPS = 30
 TIMEOUT = 2.0
 TRIES = 2
-# The packet that we shall send to each router along the path is the ICMP echo # request packet, which is exactly what we had used in the ICMP ping exercise. # We shall use the same packet that we built in the Ping exercise
+ID_RTTs_dict = defaultdict(list)
+
+
+# The packet that we shall send to each router along the path is the ICMP echo 
+# request packet, which is exactly what we had used in the ICMP ping exercise. 
+# We shall use the same packet that we built in the Ping exercise
 
 
 def checksum(string):
@@ -63,7 +71,7 @@ def build_packet():
 
 def get_route(hostname):
     icmp = socket.getprotobyname("icmp")
-    timeLeft = TIMEOUT
+    # timeLeft = TIMEOUT
     for ttl in range(1, MAX_HOPS):
         for tries in range(TRIES):
             # create ICMP socket, connect to destination IP, set timeout and time-to-live
@@ -71,24 +79,14 @@ def get_route(hostname):
 
             try:
                 # create ICMP ping packet, record the time delay of getting response detect timeout
-                icmp_socket.sendto(build_packet(), (destAddr, 1))
-                recPacket, addr = icmp_socket.recvfrom(1024)
-                ip_version = bin(struct.unpack('@B', recPacket[0:1])[0])[2:].zfill(8)[:4]
-                if int(ip_version, 2) == 4:
-                    time_sent = struct.unpack('@d', recPacket[28:])[0]
-                    RTT = time.time() - time_sent
-                    print('RTT: {:.3f}s'.format(RTT))
+                icmp_socket.sendto(build_packet(), (hostname, 1))
+                RTT = receive_one_ping(icmp_socket, tries, TIMEOUT, hostname)
+                print('RTT: {:.3f}s'.format(RTT))
             except:
                 continue
             else:
                 # parse and handle different response type
-                if int(ip_version, 2) == 4:
-                    icmp_header = recPacket[20:28]
-                    icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('@BBHHH', icmp_header)
-                    if icmp_type == 3:
-                        raise('destination unreachable')
-                    elif icmp_type != 0:
-                        raise('type error')
+                pass # response type is handled in receive_one_ping method
 
                 # Hint: use wireshark to get the byte location of the response type
 

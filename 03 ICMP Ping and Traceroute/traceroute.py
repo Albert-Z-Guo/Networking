@@ -76,7 +76,8 @@ def get_route(hostname):
         for tries in range(TRIES):
             # create ICMP socket, connect to destination IP, set timeout and time-to-live
             icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
-
+            icmp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+            icmp_socket.settimeout(TIMEOUT)
             try:
                 # create ICMP ping packet, record the time delay of getting response detect timeout
                 icmp_socket.sendto(build_packet(), (hostname, 1))

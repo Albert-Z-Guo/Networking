@@ -60,9 +60,9 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         print('ICMP Chechsum: {}'.format(icmp_chechsum))
 
         if icmp_type == 0:
-            print('\tICMP Type 0: Echo Reply')
+            print('ICMP Type 0: Echo Reply')
         elif icmp_type == 3:
-            print('\tICMP Type 3: Destination Unreachable\n\tICMP Code {}:'.format(icmp_code), end=' ')
+            print('ICMP Type 3: Destination Unreachable\nICMP Code {}:'.format(icmp_code), end=' ')
             if icmp_code == 0: print('Net Unreachable')
             if icmp_code == 1: print('Host Unreachable')
             if icmp_code == 2: print('Protocol Unreachable')
@@ -80,8 +80,8 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
             if icmp_code == 14: print('Host Precedence Violation')
             if icmp_code == 15: print('Precedence cutoff in effect')
         else:
-            print('\tICMP Type {}'.format(icmp_type))
-            print('\tICMP Code {}'.format(icmp_code))
+            print('ICMP Type {}'.format(icmp_type))
+            print('ICMP Code {}'.format(icmp_code))
 
         return 'RTT: {:.5f}s'.format(RTT)
 

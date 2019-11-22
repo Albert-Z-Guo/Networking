@@ -52,7 +52,7 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
         ID_RTTs_dict[ID].append(RTT)
 
-        # handle different response type and error code, display error message to the user
+        # handle different response types and error codes, display error message to the user
         icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', recPacket[20:28])
         print('ICMP ID:       {}'.format(icmp_id))
         print('ICMP Sequence: {}'.format(icmp_seq))

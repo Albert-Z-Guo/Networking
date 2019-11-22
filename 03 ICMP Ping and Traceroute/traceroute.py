@@ -74,7 +74,7 @@ def get_route(hostname):
             except:
                 continue
             else:
-                # parse and handle different response type
+                # parse and handle different response types
                 icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', recPacket[20:28])
                 if icmp_type == 0:
                     print('ICMP Type 0: Echo Reply')

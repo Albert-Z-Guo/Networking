@@ -83,7 +83,7 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
             print('ICMP Type {}'.format(icmp_type))
             print('ICMP Code {}'.format(icmp_code))
 
-        return 'RTT: {:.5f}s'.format(RTT)
+        return 'RTT: {:.3f} ms'.format(RTT*1000)
 
 
 def send_one_ping(mySocket, destAddr, ID):

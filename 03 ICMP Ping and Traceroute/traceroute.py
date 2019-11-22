@@ -17,23 +17,19 @@ def checksum(string):
     csum = 0
     countTo = (len(string) // 2) * 2
     count = 0
-
     while count < countTo:
         thisVal = ord(string[count+1]) * 256 + ord(string[count])
         csum = csum + thisVal
         csum = csum & 0xffffffff
         count = count + 2
-
     if countTo < len(string):
         csum = csum + ord(string[len(string) - 1])
         csum = csum & 0xffffffff
-
     csum = (csum >> 16) + (csum & 0xffff)
     csum = csum + (csum >> 16)
     answer = ~csum
     answer = answer & 0xffff
     answer = answer >> 8 | (answer << 8 & 0xff00)
-
     return answer
 
 
@@ -59,11 +55,11 @@ def get_route(hostname):
         print('TTL: {}'.format(ttl))
         for tries in range(TRIES):
             print('\tTry: {}'.format(tries))
-            # create ICMP socket, connect to destination IP, set timeout and time-to-live
+            # create ICMP socket, connect to destination IP, set time-to-live
             icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
             icmp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, ttl)
             try:
-                # create ICMP ping packet, record the time delay of getting response detect timeout
+                # create ICMP ping packet, record the time delay of getting response, detect timeout
                 icmp_socket.sendto(build_packet(), (socket.gethostbyname(hostname), 1))
                 start_time = time.time()
                 what_ready = select.select([icmp_socket], [], [], TIMEOUT)

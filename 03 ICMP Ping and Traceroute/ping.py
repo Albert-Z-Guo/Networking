@@ -9,6 +9,7 @@ import struct
 import sys
 import time
 
+
 ICMP_ECHO_REQUEST = 8
 NUM_PACKETS_SENT = 0
 ID_RTTs_dict = defaultdict(list)
@@ -18,23 +19,19 @@ def checksum(string):
     csum = 0
     countTo = (len(string) // 2) * 2
     count = 0
-
     while count < countTo:
         thisVal = ord(string[count+1]) * 256 + ord(string[count])
         csum = csum + thisVal
         csum = csum & 0xffffffff
         count = count + 2
-
     if countTo < len(string):
         csum = csum + ord(string[len(string) - 1])
         csum = csum & 0xffffffff
-
     csum = (csum >> 16) + (csum & 0xffff)
     csum = csum + (csum >> 16)
     answer = ~csum
     answer = answer & 0xffff
     answer = answer >> 8 | (answer << 8 & 0xff00)
-
     return answer
 
 
@@ -104,7 +101,7 @@ def send_one_ping(mySocket, destAddr, ID):
     packet = header + data
     # AF_INET address must be tuple, not str # Both LISTS and TUPLES consist of a number of objects
     mySocket.sendto(packet, (destAddr, 1))
-    # which can be referenced by their position number within the object.
+    # update number of packets sent
     global NUM_PACKETS_SENT
     NUM_PACKETS_SENT += 1
 
@@ -126,11 +123,11 @@ def ping(host, timeout=1):
     # the client assumes that either the client's ping or the server's pong is lost
     dest = socket.gethostbyname(host)
     print('Pinging ' + dest + ' using Python:')
-    # Send ping requests to a server separated by approximately one second
+    # Send ping requests to a server separated by one second
     while 1:
         delay = do_one_ping(dest, timeout)
         print(delay)
-        time.sleep(1) # one second
+        time.sleep(1)
     return delay
 
 

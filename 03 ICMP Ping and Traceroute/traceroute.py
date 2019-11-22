@@ -113,4 +113,7 @@ def get_route(hostname):
 
 
 if __name__ == "__main__":
-    get_route(sys.argv[1])
+    try:
+        get_route(sys.argv[1])
+    except IndexError:
+        print('A hostname argument is required. e.g. $sudo python traceroute.py google.com')

@@ -1,4 +1,3 @@
-from collections import defaultdict
 import os
 import select
 import socket
@@ -6,19 +5,11 @@ import struct
 import sys
 import time
 
-from ping import *
-
 
 ICMP_ECHO_REQUEST = 8
 MAX_HOPS = 30
 TIMEOUT = 2.0
 TRIES = 2
-ID_RTTs_dict = defaultdict(list)
-
-
-# The packet that we shall send to each router along the path is the ICMP echo 
-# request packet, which is exactly what we had used in the ICMP ping exercise. 
-# We shall use the same packet that we built in the Ping exercise
 
 
 def checksum(string):
@@ -46,12 +37,6 @@ def checksum(string):
 
 
 def build_packet():
-    # In the sendOnePing() method of the ICMP Ping exercise ,firstly the header of our
-    # packet to be sent was made, secondly the checksum was appended to the header and
-    # then finally the complete packet was sent to the destination.
-    # Make the header in a similar way to the ping exercise.
-    # Append checksum to the header.
-    # So the function ending should look like this
     ID = os.getpid() & 0xFFFF
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, 0, ID, 1)
     data = struct.pack("d", time.time())
@@ -63,37 +48,58 @@ def build_packet():
         myChecksum = socket.htons(myChecksum) & 0xffff
     else:
         myChecksum = socket.htons(myChecksum)
-
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
     return packet
 
 
 def get_route(hostname):
-    # icmp = socket.getprotobyname("icmp")
-    # timeLeft = TIMEOUT
     for ttl in range(1, MAX_HOPS):
+        print('\nTTL: {}'.format(ttl))
         for tries in range(TRIES):
+            print('Try: {}'.format(tries))
             # create ICMP socket, connect to destination IP, set timeout and time-to-live
             icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
-            icmp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-            icmp_socket.settimeout(TIMEOUT)
+            icmp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, ttl)
             try:
                 # create ICMP ping packet, record the time delay of getting response detect timeout
-                icmp_socket.sendto(build_packet(), (hostname, 1))
-                # send_one_ping(icmp_socket, host, tries)
-                RTT = receive_one_ping(icmp_socket, tries, TIMEOUT, hostname)
-                print(RTT)
+                icmp_socket.sendto(build_packet(), (socket.gethostbyname(hostname), 1))
+                start_time = time.time()
+                what_ready = select.select([icmp_socket], [], [], TIMEOUT)
+                if what_ready[0] == []: return 'Request timed out.'
+                recPacket, addr = icmp_socket.recvfrom(1024)
+                print('\tRTT: {:.3f} ms'.format((time.time() - start_time)*1000))
+                print('\tRouter IP Address: {} '.format(addr[0]))
+                print('\tRouter Name: {}'.format(socket.gethostbyaddr(addr[0])[0]))
             except:
                 continue
             else:
                 # parse and handle different response type
-                pass # response type is handled in receive_one_ping method
-
-                # Hint: use wireshark to get the byte location of the response type
-
+                icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', recPacket[20:28])
+                if icmp_type == 0:
+                    print('ICMP Type 0: Echo Reply')
+                elif icmp_type == 3:
+                    print('ICMP Type 3: Destination Unreachable\nDescription:')
+                    if icmp_code == 0: print('Net Unreachable')
+                    if icmp_code == 1: print('Host Unreachable')
+                    if icmp_code == 2: print('Protocol Unreachable')
+                    if icmp_code == 3: print('Port Unreachable')
+                    if icmp_code == 4: print("Fragmentation Needed and Don't Fragment was Set")
+                    if icmp_code == 5: print('Source Route Failed')
+                    if icmp_code == 6: print('Destination Network Unknown')
+                    if icmp_code == 7: print('Destination Host Unknown')
+                    if icmp_code == 8: print('Source Host Isolated')
+                    if icmp_code == 9: print('Communication with Destination Network is Administratively Prohibited')
+                    if icmp_code == 10: print('Communication with Destination Host is Administratively Prohibited')
+                    if icmp_code == 11: print('Destination Network Unreachable for Type of Service')
+                    if icmp_code == 12: print('Destination Host Unreachable for Type of Service')
+                    if icmp_code == 13: print('Communication Administratively Prohibited')
+                    if icmp_code == 14: print('Host Precedence Violation')
+                    if icmp_code == 15: print('Precedence cutoff in effect')
+                else:
+                    print('ICMP Type {}'.format(icmp_type))
+                    print('ICMP Code {}'.format(icmp_code))
             finally:
-                # close the socket
                 icmp_socket.close()
 
 

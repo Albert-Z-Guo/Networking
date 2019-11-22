@@ -9,8 +9,8 @@ import sys
 import time
 
 ICMP_ECHO_REQUEST = 8
-ID_RTTs_dict = defaultdict(list)
 NUM_PACKETS_SENT = 0
+ID_RTTs_dict = defaultdict(list)
 
 
 def checksum(string):
@@ -40,34 +40,23 @@ def checksum(string):
 def receive_one_ping(mySocket, ID, timeout, destAddr):
     while 1:
         what_ready = select.select([mySocket], [], [], timeout)
-        if what_ready[0] == []:  # Timeout
-            return 'Request timed out.'
+        if what_ready[0] == []: return 'Request timed out.'
         recPacket, addr = mySocket.recvfrom(1024)
 
         # read the packet and parse the source IP address, you will need this part for traceroute
-        ip_version = int(bin(struct.unpack('B', recPacket[0:1])[0])[2:].zfill(8)[:4], 2)
-        print('\nIP version: {}'.format(ip_version))
+        source_address = '.'.join([str(byte) for byte in bytearray(recPacket[12:16])])
+        print('\nSource Address: {}'.format(source_address))
+        print('TTL: {}'.format(struct.unpack('B', recPacket[8:9])[0]))
         
         # calculate and return the round trip time for this ping
-        if ip_version == 4:
-            print('TTL: {}'.format(struct.unpack('B', recPacket[8:9])[0]))
-            RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
-            # if ID == icmp_id: ID_RTTs_dict[ID].append(RTT)
-            ID_RTTs_dict[ID].append(RTT)
-            source_address = recPacket[12:16]
-            icmp_header = recPacket[20:28]
-            
-        elif ip_version == 6:
-            source_address = recPacket[8:24]
-            icmp_header = recPacket[40:48]
-        
-        print('Source Address: {}'.format(source_address))
+        RTT = time.time() - struct.unpack('d', recPacket[28:36])[0]
+        ID_RTTs_dict[ID].append(RTT)
 
         # handle different response type and error code, display error message to the user
-        icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', icmp_header)
-        print('ICMP Chechsum: {}'.format(icmp_chechsum))
+        icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', recPacket[20:28])
         print('ICMP ID:       {}'.format(icmp_id))
         print('ICMP Sequence: {}'.format(icmp_seq))
+        print('ICMP Chechsum: {}'.format(icmp_chechsum))
 
         if icmp_type == 0:
             print('ICMP Type 0: Echo Reply')
@@ -92,12 +81,7 @@ def receive_one_ping(mySocket, ID, timeout, destAddr):
         else:
             print('ICMP Type {}'.format(icmp_type))
             print('ICMP Code {}'.format(icmp_code))
-        
-        # tests
-        print('header checksum: {}'.format(struct.unpack('H', recPacket[10:12])[0]))
-        print('actual checksum: {}'.format(checksum(str(recPacket[:10] + recPacket[12:]))))
-        
-        if ip_version == 6: return 'hop_limit: ' + str(struct.unpack('B', recPacket[7:8])[0])
+
         return 'RTT: {:.5f}s'.format(RTT)
 
 
@@ -115,7 +99,6 @@ def send_one_ping(mySocket, destAddr, ID):
         myChecksum = socket.htons(myChecksum) & 0xffff
     else:
         myChecksum = socket.htons(myChecksum)
-
     header = struct.pack('bbHHh', ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
     # AF_INET address must be tuple, not str # Both LISTS and TUPLES consist of a number of objects
@@ -128,12 +111,11 @@ def send_one_ping(mySocket, destAddr, ID):
 def do_one_ping(destAddr, timeout):
     icmp = socket.getprotobyname('icmp')
     # SOCK_RAW is a powerful socket type. For more details: http://sock-raw.org/papers/sock_raw
-    mySocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
+    mySocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp) # IPv4 Protocol Only
     # Return the current process i
     myID = os.getpid() & 0xFFFF
     send_one_ping(mySocket, destAddr, myID)
     delay = receive_one_ping(mySocket, myID, timeout, destAddr)
-
     mySocket.close()
     return delay
 
@@ -143,12 +125,11 @@ def ping(host, timeout=1):
     # the client assumes that either the client's ping or the server's pong is lost
     dest = socket.gethostbyname(host)
     print('Pinging ' + dest + ' using Python:')
-    print('')
     # Send ping requests to a server separated by approximately one second
     while 1:
         delay = do_one_ping(dest, timeout)
         print(delay)
-        time.sleep(1)  # one second
+        time.sleep(1) # one second
     return delay
 
 

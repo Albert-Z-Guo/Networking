@@ -9,6 +9,16 @@ Part 2: <br />
 
 Note that `ping.py` and `traceroute.py` are tested in Python 2.7.17 only. Python 3 may have some compatibility problems.
 
+### Tests
+```python2
+sudo python ping.py hostname
+```
+
+```python2
+sudo python traceroute.py hostname
+```
+where `hostname` can be `google.com` or `apple.com` for example.
+
 ### References
 - [Internet Control Message Protocol (ICMP) Parameters](https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml)
 - [A Primer On Internet and TCP/IP Tools](https://tools.ietf.org/html/rfc1739)

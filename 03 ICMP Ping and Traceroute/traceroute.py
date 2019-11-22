@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import select
 import socket
@@ -55,9 +56,9 @@ def build_packet():
 
 def get_route(hostname):
     for ttl in range(1, MAX_HOPS):
-        print('\nTTL: {}'.format(ttl))
+        print('TTL: {}'.format(ttl))
         for tries in range(TRIES):
-            print('Try: {}'.format(tries))
+            print('\tTry: {}'.format(tries))
             # create ICMP socket, connect to destination IP, set timeout and time-to-live
             icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
             icmp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, ttl)
@@ -70,16 +71,19 @@ def get_route(hostname):
                 recPacket, addr = icmp_socket.recvfrom(1024)
                 print('\tRTT: {:.3f} ms'.format((time.time() - start_time)*1000))
                 print('\tRouter IP Address: {} '.format(addr[0]))
-                print('\tRouter Name: {}'.format(socket.gethostbyaddr(addr[0])[0]))
+                try:
+                    print('\tRouter Name: {}'.format(socket.gethostbyaddr(addr[0])[0]))
+                except:
+                    print('\tRouter name is not available.')
             except:
                 continue
             else:
                 # parse and handle different response types
                 icmp_type, icmp_code, icmp_chechsum, icmp_id, icmp_seq = struct.unpack('BBHHH', recPacket[20:28])
                 if icmp_type == 0:
-                    print('ICMP Type 0: Echo Reply')
+                    print('\tICMP Type 0: Echo Reply')
                 elif icmp_type == 3:
-                    print('ICMP Type 3: Destination Unreachable\nDescription:')
+                    print('\tICMP Type 3: Destination Unreachable\n\tICMP Code {}:'.format(icmp_code), end=' ')
                     if icmp_code == 0: print('Net Unreachable')
                     if icmp_code == 1: print('Host Unreachable')
                     if icmp_code == 2: print('Protocol Unreachable')
@@ -96,9 +100,14 @@ def get_route(hostname):
                     if icmp_code == 13: print('Communication Administratively Prohibited')
                     if icmp_code == 14: print('Host Precedence Violation')
                     if icmp_code == 15: print('Precedence cutoff in effect')
+                elif icmp_type == 11:
+                    print('\tICMP Type 11: Time Exceeded\n\tICMP Code {}:'.format(icmp_code), end=' ')
+                    if icmp_code == 0: print('Time to Live exceeded in Transit')
+                    if icmp_code == 1: print('Fragment Reassembly Time Exceeded')
                 else:
-                    print('ICMP Type {}'.format(icmp_type))
-                    print('ICMP Code {}'.format(icmp_code))
+                    print('\tICMP Type {}'.format(icmp_type))
+                    print('\tICMP Code {}'.format(icmp_code))
+                print('')
             finally:
                 icmp_socket.close()
 

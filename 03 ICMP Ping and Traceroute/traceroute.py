@@ -75,7 +75,8 @@ def get_route(hostname):
                     print('\tRouter Name: {}'.format(socket.gethostbyaddr(addr[0])[0]))
                 except:
                     print('\tRouter name is not available.')
-            except:
+            except Exception as e:
+                print('\t{}'.format(e))
                 continue
             else:
                 # parse and handle different response types

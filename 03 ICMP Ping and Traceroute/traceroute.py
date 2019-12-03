@@ -63,7 +63,9 @@ def get_route(hostname):
                 icmp_socket.sendto(build_packet(), (socket.gethostbyname(hostname), 1))
                 start_time = time.time()
                 what_ready = select.select([icmp_socket], [], [], TIMEOUT)
-                if what_ready[0] == []: return 'Request timed out.'
+                if what_ready[0] == []:
+                    print('Request timed out.')
+                    return
                 recPacket, addr = icmp_socket.recvfrom(1024)
                 print('\tRTT: {:.3f} ms'.format((time.time() - start_time)*1000))
                 print('\tRouter IP Address: {} '.format(addr[0]))

@@ -133,7 +133,7 @@ def ping(host, timeout=1):
 
 if __name__ == '__main__':
     try:
-        ping(sys.argv[1])
+        print(ping(sys.argv[1]))
     except IndexError:
         print('A hostname argument is required. e.g. $sudo python ping.py google.com')
     except KeyboardInterrupt:
